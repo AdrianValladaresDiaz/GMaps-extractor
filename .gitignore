@@ -9,4 +9,4 @@ cdk.out
 
 .env
 .build
-*/.obisidian
+documentation/.obsidian/
