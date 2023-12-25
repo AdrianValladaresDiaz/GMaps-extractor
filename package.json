@@ -5,9 +5,9 @@
     "maps_info_extractor_app": "bin/maps_info_extractor_app.js"
   },
   "scripts": {
-    "build": "tsc --outDir build",
+    "build": "tsc --outDir .build",
     "test": "jest",
-    "cdk": "cdk"
+    "synth": "cdk synth ./.build/bin/maps_info_extractor_app"
   },
   "devDependencies": {
     "@types/jest": "^29.5.8",
