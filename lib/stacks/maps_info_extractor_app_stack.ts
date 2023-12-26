@@ -1,14 +1,14 @@
 import * as cdk from "aws-cdk-lib";
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
-import { Code, Function, Runtime } from "aws-cdk-lib/aws-lambda";
 import { Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 import { definition as ingestCitiesFromS3 } from "../../code/lambdas/ingestCitiesFromS3";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { NodeLambdaWithIAMRole } from "../constructs";
 
 export class MapsInfoExtractorAppStack extends cdk.Stack {
   bucket: Bucket;
   citiesTable: Table;
+  S3IngestionLambda: NodeLambdaWithIAMRole;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -43,10 +43,11 @@ export class MapsInfoExtractorAppStack extends cdk.Stack {
       }
     );
 
-    new NodejsFunction(
+    this.S3IngestionLambda = new NodeLambdaWithIAMRole(
       this,
-      ingestCitiesFromS3.functionName,
       ingestCitiesFromS3
     );
+
+    this.bucket.grantRead(this.S3IngestionLambda.role);
   }
 }

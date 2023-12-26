@@ -9,6 +9,6 @@ type NodejsFunctionPropsWithName = NodejsFunctionProps & {
 export const definition: NodejsFunctionPropsWithName = {
   handler: "handler",
   runtime: Runtime.NODEJS_20_X,
-  functionName: `ingestCitiesFromS3-${process.env.STAGE}`,
+  functionName: `ingestCitiesFromS3`,
   entry: path.join(__dirname, "ingestCitiesFromS3.ts"),
 };
