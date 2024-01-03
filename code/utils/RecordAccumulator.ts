@@ -29,9 +29,9 @@ class Memory {
     if (item === undefined || item === null) {
       return;
     }
-
     this.memory[this.insertIndex] = item;
-    if (this.insertIndex === this.maxIndex) {
+    this.insertIndex += 1;
+    if (this.insertIndex > this.maxIndex) {
       this.insertIndex = 0;
       this.isFull = true;
     }
@@ -55,7 +55,6 @@ export class RecordAccumulator extends Transform {
   }
 
   _transform(chunk: any, _: any, callback: TransformCallback): void {
-    console.log("transform this:", chunk);
     this.memory.push(chunk);
     if (this.memory.isFull) {
       this.push(this.memory.flush());

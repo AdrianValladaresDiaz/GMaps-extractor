@@ -2,13 +2,18 @@ import * as cdk from "aws-cdk-lib";
 import { AttributeType, Table } from "aws-cdk-lib/aws-dynamodb";
 import { Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
-import { definition as ingestCitiesFromS3 } from "../../code/lambdas/ingestCitiesFromS3";
 import { NodeLambdaWithIAMRole } from "../constructs";
+import { Queue } from "aws-cdk-lib/aws-sqs";
+import { definition as ingestCitiesFromS3 } from "../../code/lambdas/readCsvIntoSQS";
+import { definition as readSQSIntoDynamo } from "../../code/lambdas/readSQSIntoDynamo";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 
 export class MapsInfoExtractorAppStack extends cdk.Stack {
   bucket: Bucket;
   citiesTable: Table;
-  S3IngestionLambda: NodeLambdaWithIAMRole;
+  cityIngestionSQS: Queue;
+  csvFromS3ToSQS: NodeLambdaWithIAMRole;
+  readSQSIntoDynamo: NodeLambdaWithIAMRole;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -43,11 +48,30 @@ export class MapsInfoExtractorAppStack extends cdk.Stack {
       }
     );
 
-    this.S3IngestionLambda = new NodeLambdaWithIAMRole(
-      this,
-      ingestCitiesFromS3
-    );
+    this.cityIngestionSQS = new Queue(this, "cityIngestionQueue", {
+      queueName: `MIE-cityIngestion-queue-${process.env.STAGE}`,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      visibilityTimeout: cdk.Duration.seconds(6 * 3), // 6 times lambda timeout
+      retentionPeriod: cdk.Duration.seconds(60),
+    });
 
-    this.bucket.grantRead(this.S3IngestionLambda.role);
+    this.csvFromS3ToSQS = new NodeLambdaWithIAMRole(this, ingestCitiesFromS3);
+    this.csvFromS3ToSQS.function.addEnvironment(
+      "TARGET_SQS_URL",
+      this.cityIngestionSQS.queueUrl
+    );
+    this.bucket.grantRead(this.csvFromS3ToSQS.role);
+    this.cityIngestionSQS.grantSendMessages(this.csvFromS3ToSQS.role);
+    // this needs to push to sqs
+
+    this.readSQSIntoDynamo = new NodeLambdaWithIAMRole(this, readSQSIntoDynamo);
+    this.readSQSIntoDynamo.function.addEventSource(
+      new SqsEventSource(this.cityIngestionSQS, {
+        reportBatchItemFailures: true,
+        maxConcurrency: 100,
+      })
+    );
+    this.cityIngestionSQS.grantConsumeMessages(this.readSQSIntoDynamo.role);
+    this.citiesTable.grantWriteData(this.readSQSIntoDynamo.role);
   }
 }

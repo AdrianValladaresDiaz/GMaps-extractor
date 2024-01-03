@@ -1,6 +1,6 @@
 import { createReadStream } from "fs";
 import { mockClient } from "aws-sdk-client-mock";
-import { handler, handler as ingestHandler } from "./ingestCitiesFromS3";
+import { handler } from "./readCSVIntoSQS";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import { Context } from "aws-lambda";

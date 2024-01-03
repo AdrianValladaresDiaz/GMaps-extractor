@@ -1,4 +1,5 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { SQSClient } from "@aws-sdk/client-sqs";
 import { parse } from "csv-parse";
 import { Handler } from "aws-lambda";
 import { Readable } from "stream";
@@ -6,11 +7,14 @@ import { Readable } from "stream";
 import { ReadableStream as WebStream } from "stream/web";
 import { StreamLogger } from "../../utils/StreamLogger";
 import { RecordAccumulator } from "../../utils/RecordAccumulator";
+import { pipeline } from "stream/promises";
+import { SQSSender } from "../../utils/SQSSender";
 
 type IngestEvent = { file: string; bucket: string };
 
 export const handler: Handler = async (event: IngestEvent) => {
   const s3Client = new S3Client();
+  const sqsClient = new SQSClient();
 
   const getObjectCommand = new GetObjectCommand({
     Bucket: event.bucket,
@@ -23,11 +27,13 @@ export const handler: Handler = async (event: IngestEvent) => {
 
   const streamingBlob = objectResponse.Body.transformToWebStream();
   const csvParser = declareCsvParser();
-  const accumulator = new RecordAccumulator(3);
+  const accumulator = new RecordAccumulator(4);
+  const queueSender = new SQSSender(sqsClient);
   const logger = new StreamLogger();
 
   const modernReader = Readable.fromWeb(streamingBlob as WebStream);
-  modernReader.pipe(csvParser).pipe(accumulator).pipe(logger);
+
+  await pipeline(modernReader, csvParser, accumulator, queueSender);
   return "wololoo";
 };
 
@@ -40,7 +46,7 @@ const declareCsvParser = () => {
   });
 
   csvParser.on("end", () => {
-    console.log("parser done");
+    console.log("done parsing csv");
   });
 
   return csvParser;
