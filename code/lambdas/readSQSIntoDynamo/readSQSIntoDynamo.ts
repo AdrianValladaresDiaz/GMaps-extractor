@@ -6,7 +6,7 @@ export const handler: Handler = async (event: SQSEvent) => {
   const batchItemFailures = [];
   for (const record of event.Records) {
     try {
-      await processMessageAsync(record, context);
+      console.log("got record:", record);
     } catch (error) {
       batchItemFailures.push({ ItemIdentifier: record.messageId });
     }

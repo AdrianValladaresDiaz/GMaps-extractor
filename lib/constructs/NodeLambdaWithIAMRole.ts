@@ -1,3 +1,4 @@
+import { Duration } from "aws-cdk-lib";
 import { ManagedPolicy, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import {
   NodejsFunction,
@@ -33,6 +34,7 @@ export class NodeLambdaWithIAMRole extends Construct {
         functionName: `${props.functionName}-lambda-${process.env.STAGE}`,
         entry: props.entry,
         role: this.role,
+        timeout: Duration.seconds(15),
       }
     );
   }

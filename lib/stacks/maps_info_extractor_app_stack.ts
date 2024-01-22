@@ -62,13 +62,13 @@ export class MapsInfoExtractorAppStack extends cdk.Stack {
     );
     this.bucket.grantRead(this.csvFromS3ToSQS.role);
     this.cityIngestionSQS.grantSendMessages(this.csvFromS3ToSQS.role);
-    // this needs to push to sqs
 
     this.readSQSIntoDynamo = new NodeLambdaWithIAMRole(this, readSQSIntoDynamo);
     this.readSQSIntoDynamo.function.addEventSource(
       new SqsEventSource(this.cityIngestionSQS, {
         reportBatchItemFailures: true,
         maxConcurrency: 100,
+        enabled: true,
       })
     );
     this.cityIngestionSQS.grantConsumeMessages(this.readSQSIntoDynamo.role);
