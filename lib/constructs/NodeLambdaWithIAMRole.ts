@@ -35,6 +35,7 @@ export class NodeLambdaWithIAMRole extends Construct {
         entry: props.entry,
         role: this.role,
         timeout: Duration.seconds(15),
+        environment: {},
       }
     );
   }

@@ -47,6 +47,9 @@ class Memory {
   }
 }
 
+/**
+ * Groups its input into batches of "batchsize" length.
+ */
 export class RecordAccumulator extends Transform {
   private memory: Memory;
   constructor(batchSize: number) {

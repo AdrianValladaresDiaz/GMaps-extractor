@@ -71,6 +71,10 @@ export class MapsInfoExtractorAppStack extends cdk.Stack {
         enabled: true,
       })
     );
+    this.csvFromS3ToSQS.function.addEnvironment(
+      "DYNAMO_TABLE_NAME",
+      this.citiesTable.tableName
+    );
     this.cityIngestionSQS.grantConsumeMessages(this.readSQSIntoDynamo.role);
     this.citiesTable.grantWriteData(this.readSQSIntoDynamo.role);
   }

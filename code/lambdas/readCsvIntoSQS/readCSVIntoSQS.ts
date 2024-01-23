@@ -27,7 +27,7 @@ export const handler: Handler = async (event: IngestEvent) => {
 
   const streamingBlob = objectResponse.Body.transformToWebStream();
   const csvParser = declareCsvParser();
-  const accumulator = new RecordAccumulator(4);
+  const accumulator = new RecordAccumulator(5);
   const queueSender = new SQSSender(sqsClient);
   const logger = new StreamLogger();
 
